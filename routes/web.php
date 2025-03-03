@@ -13,6 +13,8 @@ Route::group(['middleware' => 'auth'], function() {
 
     // Store a new kick
     Route::post('/kicks', 'KickController@store')->name('kicks.store');
+
+    Route::delete('/kicks/{kick}', 'KickController@destroy')->name('kicks.destroy');
 });
 
 // (Optional) You can also set '/' to redirect to '/kicks', if you want:

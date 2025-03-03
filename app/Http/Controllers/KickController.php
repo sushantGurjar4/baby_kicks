@@ -12,8 +12,12 @@ class KickController extends Controller
      */
     public function index()
     {
-        // Get all kicks, newest first
-        $kicks = Kick::orderBy('kick_time', 'desc')->get();
+        // Get only kicks belonging to the authenticated user, newest first
+        $kicks = Kick::where('user_id', auth()->id())
+                    ->where('is_active', true)
+                    ->orderBy('kick_time', 'desc')
+                    ->get();
+
         return view('kicks.index', compact('kicks'));
     }
 
@@ -32,9 +36,29 @@ class KickController extends Controller
         Kick::create([
             'kick_time'   => now(),
             'description' => $request->description,
+            'user_id'     => auth()->id(), // or $request->user()->id
         ]);
 
         return redirect()->route('kicks.index')
                      ->with('success', 'Kick logged successfully!');
     }
+
+    public function destroy($id)
+    {
+        $kick = Kick::findOrFail($id);
+
+        // Optional: Ensure the kick belongs to the current user
+        if ($kick->user_id !== auth()->id()) {
+            return redirect()->route('kicks.index')
+                ->with('error', 'Unauthorized action.');
+        }
+
+        // Instead of $kick->delete(), do:
+        $kick->is_active = false;
+        $kick->save();
+
+        return redirect()->route('kicks.index')
+            ->with('success', 'Kick entry marked inactive!');
+    }
+
 }

@@ -9,8 +9,19 @@ class Kick extends Model
     protected $fillable = [
         'kick_time',
         'description',
+        'user_id',
+        'is_active',
     ];
 
-    // If you want kick_time as a Carbon date:
-    protected $dates = ['kick_time'];
+    // Tells Eloquent to treat 'kick_time' as a date
+    protected $dates = [
+        'kick_time',
+    ];
+
+    // If you want to cast 'is_active' to a boolean
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
+    // Relationship with user, etc.
 }

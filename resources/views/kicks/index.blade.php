@@ -35,7 +35,7 @@
             padding: 10px 20px;
             font-size: 1.2rem;
             border-radius: 50px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         .btn-baby:hover {
             background-color: #FF80B3;
@@ -50,6 +50,13 @@
         .card {
             border: none;
             margin-bottom: 30px;
+        }
+        /* User Info Styling */
+        .user-info {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #FF6699;
+            text-align: center;
         }
         /* Customized Modal Styles */
         .modal-header {
@@ -67,6 +74,18 @@
         .modal-footer .btn-secondary {
             background-color: #ccc;
             border: none;
+        }
+        /* Delete Button Styling */
+        .btn-delete {
+            background-color: #e74c3c;
+            border: none;
+            color: #fff;
+            padding: 5px 10px;
+            font-size: 0.9rem;
+            border-radius: 4px;
+        }
+        .btn-delete:hover {
+            background-color: #c0392b;
         }
     </style>
 </head>
@@ -93,6 +112,13 @@
             </div>
         @endif
     </div>
+
+    <!-- Display Logged In User Info -->
+    @if(Auth::check())
+        <div class="user-info">
+            Logged in as: <strong>{{ Auth::user()->name }}</strong>
+        </div>
+    @endif
 
     <!-- Success Alert (if a kick was logged) -->
     @if(session('success'))
@@ -121,6 +147,7 @@
                             <th>#</th>
                             <th>Kick Date &amp; Time</th>
                             <th>Description</th>
+                            <th>Action</th> <!-- New Action Column -->
                         </tr>
                     </thead>
                     <tbody>
@@ -129,10 +156,21 @@
                                 <td>{{ $index + 1 }}</td>
                                 <td>{{ $kick->kick_time->format('l, F j, Y g:i A') }}</td>
                                 <td>{{ $kick->description ?? '—' }}</td>
+                                <td>
+                                    <!-- Delete Button/Form -->
+                                    <form action="{{ route('kicks.destroy', $kick->id) }}" method="POST"
+                                        onsubmit="return confirm('Are you sure you want to mark this kick as inactive?');">
+                                        {{ csrf_field() }}
+                                        {{ method_field('DELETE') }}
+                                        <button type="submit" class="btn-delete">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" class="text-center">No kicks logged yet.</td>
+                                <td colspan="4" class="text-center">No kicks logged yet.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -162,8 +200,7 @@
                     <!-- Description Input -->
                     <div class="form-group">
                         <label for="description">Description (optional):</label>
-                        <textarea class="form-control" id="description" name="description" rows="3"
-                                  placeholder="Enter details (e.g., Baby was extra active)"></textarea>
+                        <textarea class="form-control" id="description" name="description" rows="3" placeholder="Enter details (e.g., Baby was extra active)"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -181,58 +218,5 @@
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
-
-<!-- Optional: Baby-Themed Popup Animation
-     Uncomment this section if you want a bouncing baby popup
-     after a successful log. Just ensure 'session("success")' is set. -->
-{{--
-@if(session('success'))
-<style>
-.kick-popup {
-    display: none;
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(255, 204, 229, 0.95);
-    padding: 20px 30px;
-    border-radius: 15px;
-    text-align: center;
-    font-size: 1.8rem;
-    color: #fff;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-    animation: fadeIn 0.5s ease-in-out;
-    z-index: 9999;
-}
-.kick-popup i {
-    font-size: 3rem;
-    color: #ff6699;
-    margin-bottom: 10px;
-    animation: bounce 1s infinite;
-}
-@keyframes fadeIn {
-    from { opacity: 0; transform: translate(-50%, -60%); }
-    to   { opacity: 1; transform: translate(-50%, -50%); }
-}
-@keyframes bounce {
-    0%,100% { transform: translateY(0); }
-    50%     { transform: translateY(-8px); }
-}
-</style>
-<div class="kick-popup" id="kick-popup">
-    <i class="fas fa-baby"></i><br>
-    Kick Logged!
-</div>
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    let popup = document.getElementById('kick-popup');
-    popup.style.display = 'block';
-    setTimeout(() => {
-        popup.style.display = 'none';
-    }, 2000);
-});
-</script>
-@endif
---}}
-
 </body>
 </html>
