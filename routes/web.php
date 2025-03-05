@@ -1,25 +1,26 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\KickController;
 
-// Authentication routes are automatically registered by make:auth
+// If using Laravel 5.5, you must use string-based references.
+// Also ensure you only have Auth::routes() once.
 Auth::routes();
 
-// Only authenticated users can access these routes:
 Route::group(['middleware' => 'auth'], function() {
-    // Show all kicks
+    // Show today's kicks (main listing)
     Route::get('/kicks', 'KickController@index')->name('kicks.index');
-
+    
+    // Show all-time kicks
+    Route::get('/kicks/all', 'KickController@all')->name('kicks.all');
+    
     // Store a new kick
     Route::post('/kicks', 'KickController@store')->name('kicks.store');
-
+    
+    // Soft-delete (mark inactive)
     Route::delete('/kicks/{kick}', 'KickController@destroy')->name('kicks.destroy');
 });
 
-// (Optional) You can also set '/' to redirect to '/kicks', if you want:
+// Redirect '/' to '/kicks'
 Route::get('/', function () {
     return redirect()->route('kicks.index');
 });
-    
-Auth::routes();

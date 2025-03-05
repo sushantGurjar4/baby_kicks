@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Baby Kick Counter - Today's Kicks</title>
+    <title>Baby Kick Counter - All-Time Kicks</title>
     <!-- Bootstrap 4 CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <!-- Google Font: Comic Neue -->
@@ -59,23 +59,6 @@
             border: none;
             margin-bottom: 30px;
         }
-        /* Modal Styles */
-        .modal-header {
-            background-color: #FFCCE5;
-            border-bottom: none;
-        }
-        .modal-header h5 {
-            font-size: 1.8rem;
-            color: #fff;
-        }
-        .modal-header .close {
-            color: #fff;
-            opacity: 1;
-        }
-        .modal-footer .btn-secondary {
-            background-color: #ccc;
-            border: none;
-        }
     </style>
 </head>
 <body>
@@ -103,29 +86,21 @@
     <!-- Logged In User Info -->
     @if(Auth::check())
         <div class="user-info">
-            Hi <strong>{{ Auth::user()->name }}</strong>! Welcome to your Baby Kick Counter.
+            Hi <strong>{{ Auth::user()->name }}</strong>! Here are all your kicks.
         </div>
     @endif
 
-    <!-- Today's Date and Total Kicks -->
+    <!-- Total Lifetime Kicks -->
     <div class="text-center mb-4">
-        <h2>Today's Date: {{ \Carbon\Carbon::now()->format('l, F j, Y') }}</h2>
-        <h4>Total Kicks Today: {{ $countToday }}</h4>
-        <!-- Link to All-Time Kicks Page -->
-        <a href="{{ route('kicks.all') }}" class="btn btn-baby">View All-Time Kicks</a>
+        <h2>Total Lifetime Kicks: {{ $countAll }}</h2>
+        <!-- Link back to today's kicks -->
+        <a href="{{ route('kicks.index') }}" class="btn btn-baby">View Today's Kicks</a>
     </div>
 
-    <!-- Log Kick Button -->
-    <div class="text-center mb-4">
-        <button type="button" class="btn btn-baby" data-toggle="modal" data-target="#kickModal">
-            <i class="fas fa-plus"></i> Log Kick
-        </button>
-    </div>
-
-    <!-- Today's Kicks Table -->
+    <!-- All-Time Kicks Table -->
     <div class="card">
         <div class="card-header text-center">
-            <h4 class="mb-0">Today's Kicks (Newest First)</h4>
+            <h4 class="mb-0">All Kicks (Newest First)</h4>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -135,69 +110,24 @@
                             <th>#</th>
                             <th>Kick Date &amp; Time</th>
                             <th>Description</th>
-                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($todayKicks as $index => $kick)
+                        @forelse($allKicks as $index => $kick)
                             <tr>
                                 <td>{{ $index + 1 }}</td>
-                                <td>{{ $kick->kick_time->format('g:i A') }}</td>
+                                <td>{{ $kick->kick_time->format('l, F j, Y g:i A') }}</td>
                                 <td>{{ $kick->description ?? '—' }}</td>
-                                <td>
-                                    <form action="{{ route('kicks.destroy', $kick->id) }}" method="POST" 
-                                          onsubmit="return confirm('Are you sure you want to mark this kick as inactive?');">
-                                        {{ csrf_field() }}
-                                        {{ method_field('DELETE') }}
-                                        <button type="submit" class="btn-delete btn btn-sm" style="background-color: #e74c3c; border: none; color: #fff; padding: 5px 10px; border-radius: 4px;">
-                                            <i class="fas fa-trash"></i> Delete
-                                        </button>
-                                    </form>
-                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="text-center">No kicks logged yet for today.</td>
+                                <td colspan="3" class="text-center">No kicks logged yet.</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
         </div>
-    </div>
-</div>
-
-<!-- Modal for Logging a New Kick -->
-<div class="modal fade" id="kickModal" tabindex="-1" role="dialog" aria-labelledby="kickModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <form action="{{ route('kicks.store') }}" method="POST">
-            {{ csrf_field() }}
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="kickModalLabel">
-                        <i class="fas fa-baby"></i>
-                        <i class="fas fa-baby-carriage"></i>
-                        Log a New Kick
-                    </h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <!-- Description Input -->
-                    <div class="form-group">
-                        <label for="description">Description (optional):</label>
-                        <textarea class="form-control" id="description" name="description" rows="3" placeholder="Enter details (e.g., Baby was extra active)"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-baby">
-                        <i class="fas fa-save"></i> Save Kick
-                    </button>
-                </div>
-            </div>
-        </form>
     </div>
 </div>
 
