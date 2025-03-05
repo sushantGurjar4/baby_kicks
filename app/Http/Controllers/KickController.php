@@ -49,6 +49,36 @@ class KickController extends Controller
     }
 
     /**
+     * Display statistics for kicks.
+     */
+    public function stats()
+    {
+        // Retrieve all active kicks for the current user
+        $kicks = Kick::where('user_id', auth()->id())
+            ->where('is_active', true)
+            ->get();
+
+        // Group kicks by day (formatted as d/m)
+        $grouped = $kicks->groupBy(function($item) {
+            return \Carbon\Carbon::parse($item->kick_time)->format('d/m');
+        });
+
+        $labels = [];
+        $data = [];
+        foreach ($grouped as $date => $group) {
+            $labels[] = $date;
+            $data[] = $group->count();
+        }
+
+        // Calculate average kicks per day
+        $totalDays = count($grouped);
+        $totalKicks = $kicks->count();
+        $average = $totalDays > 0 ? round($totalKicks / $totalDays, 2) : 0;
+
+        return view('kicks.stats', compact('labels', 'data', 'average'));
+    }
+
+    /**
      * Store a newly created kick in storage.
      */
     public function store(Request $request)

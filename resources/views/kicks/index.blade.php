@@ -38,6 +38,7 @@
             font-size: 1.2rem;
             border-radius: 50px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin: 0 5px;
         }
         .btn-baby:hover {
             background-color: #FF80B3;
@@ -105,14 +106,16 @@
         <div class="user-info">
             Hi <strong>{{ Auth::user()->name }}</strong>! Welcome to your Baby Kick Counter.
         </div>
+        <div class="user-info">Funfact - The developing fetus will begin moving around 12 weeks of pregnancy but a mother may start noticing the kicking between 16 and 24 weeks!</div>
     @endif
 
-    <!-- Today's Date and Total Kicks -->
+    <!-- Today's Date, Total Kicks, and Navigation Buttons -->
     <div class="text-center mb-4">
         <h2>Today's Date: {{ \Carbon\Carbon::now()->format('l, F j, Y') }}</h2>
         <h4>Total Kicks Today: {{ $countToday }}</h4>
-        <!-- Link to All-Time Kicks Page -->
+        <!-- Navigation Buttons -->
         <a href="{{ route('kicks.all') }}" class="btn btn-baby">View All-Time Kicks</a>
+        <a href="{{ route('kicks.stats') }}" class="btn btn-baby">View Stats</a>
     </div>
 
     <!-- Log Kick Button -->
@@ -133,7 +136,7 @@
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Kick Date &amp; Time</th>
+                            <th>Time</th>
                             <th>Description</th>
                             <th>Action</th>
                         </tr>
@@ -142,6 +145,7 @@
                         @forelse($todayKicks as $index => $kick)
                             <tr>
                                 <td>{{ $index + 1 }}</td>
+                                <!-- Only the time is shown -->
                                 <td>{{ $kick->kick_time->format('g:i A') }}</td>
                                 <td>{{ $kick->description ?? '—' }}</td>
                                 <td>
@@ -149,7 +153,7 @@
                                           onsubmit="return confirm('Are you sure you want to mark this kick as inactive?');">
                                         {{ csrf_field() }}
                                         {{ method_field('DELETE') }}
-                                        <button type="submit" class="btn-delete btn btn-sm" style="background-color: #e74c3c; border: none; color: #fff; padding: 5px 10px; border-radius: 4px;">
+                                        <button type="submit" class="btn btn-sm" style="background-color: #e74c3c; border: none; color: #fff; padding: 5px 10px; border-radius: 4px;">
                                             <i class="fas fa-trash"></i> Delete
                                         </button>
                                     </form>

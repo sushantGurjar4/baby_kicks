@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Baby Kick Counter - All-Time Kicks</title>
+    <title>Baby Kick Counter - Statistics</title>
     <!-- Bootstrap 4 CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <!-- Google Font: Comic Neue -->
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@300;400;700&display=swap" rel="stylesheet">
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             background-color: #FFF8F0;
@@ -48,16 +50,21 @@
             color: #FF6699;
             text-align: center;
         }
-        .table thead {
-            background-color: #FF99CC;
-            color: #fff;
-        }
-        .table tbody tr {
-            background-color: #FFF8F0;
-        }
         .card {
             border: none;
             margin-bottom: 30px;
+        }
+        .chart-container {
+            width: 100%;
+            margin: 0 auto;
+        }
+        .stats-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .stats-header h2 {
+            font-size: 2rem;
+            color: #FF6699;
         }
     </style>
 </head>
@@ -68,11 +75,11 @@
     <div class="header">
         <div>
             <h1><i class="fas fa-baby"></i> Baby Kick Counter</h1>
-            <p>Keep track of your baby's kicks in a fun, easy way!</p>
+            <p>Track your baby's kicks in a fun, easy way!</p>
         </div>
         @if(Auth::check())
             <div>
-                <a href="#" class="btn btn-danger"
+                <a href="#" class="btn btn-danger" 
                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                    <i class="fas fa-sign-out-alt"></i> Logout
                 </a>
@@ -86,50 +93,71 @@
     <!-- Logged In User Info -->
     @if(Auth::check())
         <div class="user-info">
-            Hi <strong>{{ Auth::user()->name }}</strong>! Here are all your kicks.
+            Hi <strong>{{ Auth::user()->name }}</strong>! Here are your kick statistics.
         </div>
     @endif
 
-    <!-- Total Lifetime Kicks -->
-    <div class="text-center mb-4">
-        <h2>Total Lifetime Kicks: {{ $countAll }}</h2>
-        <!-- Link back to today's kicks page -->
-        <a href="{{ route('kicks.index') }}" class="btn btn-baby">View Today's Kicks</a>
+    <!-- Statistics Header -->
+    <div class="stats-header">
+        <h2>Average Kicks per Day: {{ $average }}</h2>
     </div>
 
-    <!-- All-Time Kicks Table -->
+    <!-- Chart Container -->
     <div class="card">
         <div class="card-header text-center">
-            <h4 class="mb-0">All Kicks (Newest First)</h4>
+            <h4 class="mb-0">Kicks Per Day</h4>
         </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped mb-0">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Kick Date &amp; Time</th>
-                            <th>Description</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($allKicks as $index => $kick)
-                            <tr>
-                                <td>{{ $index + 1 }}</td>
-                                <td>{{ $kick->kick_time->format('l, F j, Y g:i A') }}</td>
-                                <td>{{ $kick->description ?? '—' }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="3" class="text-center">No kicks logged yet.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+        <div class="card-body">
+            <div class="chart-container">
+                <canvas id="kicksChart"></canvas>
             </div>
         </div>
     </div>
+
+    <!-- Link back to Today's Kicks -->
+    <div class="text-center">
+        <a href="{{ route('kicks.index') }}" class="btn btn-baby">View Today's Kicks</a>
+    </div>
 </div>
+
+<!-- Chart.js Script -->
+<script>
+    // Data passed from the controller: labels (dates) and data (kick counts)
+    const labels = {!! json_encode($labels) !!};
+    const data = {!! json_encode($data) !!};
+
+    const ctx = document.getElementById('kicksChart').getContext('2d');
+    const kicksChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Kicks',
+                data: data,
+                backgroundColor: 'rgba(255, 153, 204, 0.7)',
+                borderColor: 'rgba(255, 153, 204, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Day (dd/mm)'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Kicks'
+                    }
+                }
+            }
+        }
+    });
+</script>
 
 <!-- jQuery, Popper.js, and Bootstrap 4 JS -->
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>

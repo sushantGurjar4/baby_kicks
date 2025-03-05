@@ -12,6 +12,9 @@ Route::group(['middleware' => 'auth'], function() {
     
     // Show all-time kicks
     Route::get('/kicks/all', 'KickController@all')->name('kicks.all');
+
+    // Statistics page (new)
+    Route::get('/kicks/stats', 'KickController@stats')->name('kicks.stats');
     
     // Store a new kick
     Route::post('/kicks', 'KickController@store')->name('kicks.store');
