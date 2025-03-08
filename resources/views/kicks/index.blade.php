@@ -49,6 +49,12 @@
             color: #FF6699;
             text-align: center;
         }
+        .congrats-message {
+            font-size: 1.4rem;
+            color: #27ae60;
+            text-align: center;
+            margin-bottom: 20px;
+        }
         .table thead {
             background-color: #FF99CC;
             color: #fff;
@@ -101,74 +107,93 @@
         @endif
     </div>
 
-    <!-- Logged In User Info -->
+    <!-- Logged In User Info and Fun Fact -->
     @if(Auth::check())
         <div class="user-info">
             Hi <strong>{{ Auth::user()->name }}</strong>! Welcome to your Baby Kick Counter.
         </div>
-        <div class="user-info">Funfact - The developing fetus will begin moving around 12 weeks of pregnancy but a mother may start noticing the kicking between 16 and 24 weeks!</div>
+        <div class="user-info">
+            Funfact – The developing fetus will begin moving around 12 weeks of pregnancy,
+            but a mother may start noticing kicks between 16 and 24 weeks!
+        </div>
     @endif
 
-    <!-- Today's Date, Total Kicks, and Navigation Buttons -->
+    <!-- Navigation and Birth Record Section -->
     <div class="text-center mb-4">
         <h2>Today's Date: {{ \Carbon\Carbon::now()->format('l, F j, Y') }}</h2>
         <h4>Total Kicks Today: {{ $countToday }}</h4>
-        <!-- Navigation Buttons -->
+        <!-- Always visible navigation buttons -->
         <a href="{{ route('kicks.all') }}" class="btn btn-baby">View All-Time Kicks</a>
         <a href="{{ route('kicks.stats') }}" class="btn btn-baby">View Stats</a>
+        <!-- Record Baby Birth Button -->
+        @if(Auth::user()->birth_date)
+            <button type="button" class="btn btn-baby" disabled>
+                <i class="fas fa-calendar-alt"></i> Record Baby Birth
+            </button>
+        @else
+            <button type="button" class="btn btn-baby" data-toggle="modal" data-target="#birthModal">
+                <i class="fas fa-calendar-alt"></i> Record Baby Birth
+            </button>
+        @endif
     </div>
 
-    <!-- Log Kick Button -->
-    <div class="text-center mb-4">
-        <button type="button" class="btn btn-baby" data-toggle="modal" data-target="#kickModal">
-            <i class="fas fa-plus"></i> Log Kick
-        </button>
-    </div>
-
-    <!-- Today's Kicks Table -->
-    <div class="card">
-        <div class="card-header text-center">
-            <h4 class="mb-0">Today's Kicks (Newest First)</h4>
+    <!-- Show Log Kick Button and Today's Kicks Table only if baby is not born -->
+    @if(is_null(Auth::user()->birth_date))
+        <div class="text-center mb-4">
+            <button type="button" class="btn btn-baby" data-toggle="modal" data-target="#kickModal">
+                <i class="fas fa-plus"></i> Log Kick
+            </button>
         </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped mb-0">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Time</th>
-                            <th>Description</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($todayKicks as $index => $kick)
+
+        <div class="card">
+            <div class="card-header text-center">
+                <h4 class="mb-0">Today's Kicks (Newest First)</h4>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped mb-0">
+                        <thead>
                             <tr>
-                                <td>{{ $index + 1 }}</td>
-                                <!-- Only the time is shown -->
-                                <td>{{ $kick->kick_time->format('g:i A') }}</td>
-                                <td>{{ $kick->description ?? '—' }}</td>
-                                <td>
-                                    <form action="{{ route('kicks.destroy', $kick->id) }}" method="POST" 
-                                          onsubmit="return confirm('Are you sure you want to mark this kick as inactive?');">
-                                        {{ csrf_field() }}
-                                        {{ method_field('DELETE') }}
-                                        <button type="submit" class="btn btn-sm" style="background-color: #e74c3c; border: none; color: #fff; padding: 5px 10px; border-radius: 4px;">
-                                            <i class="fas fa-trash"></i> Delete
-                                        </button>
-                                    </form>
-                                </td>
+                                <th>#</th>
+                                <th>Time</th>
+                                <th>Description</th>
+                                <th>Action</th>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="4" class="text-center">No kicks logged yet for today.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @forelse($todayKicks as $index => $kick)
+                                <tr>
+                                    <td>{{ $index + 1 }}</td>
+                                    <td>{{ $kick->kick_time->format('g:i A') }}</td>
+                                    <td>{{ $kick->description ?? '—' }}</td>
+                                    <td>
+                                        <form action="{{ route('kicks.destroy', $kick->id) }}" method="POST" 
+                                              onsubmit="return confirm('Are you sure you want to mark this kick as inactive?');">
+                                            {{ csrf_field() }}
+                                            {{ method_field('DELETE') }}
+                                            <button type="submit" class="btn btn-sm" 
+                                                    style="background-color: #e74c3c; border: none; color: #fff; padding: 5px 10px; border-radius: 4px;">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="text-center">No kicks logged yet for today.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </div>
+    @else
+        <!-- If baby's birth date is recorded, show congratulatory message instead of kick logging features -->
+        <div class="congrats-message">
+            Congratulations on your baby being born on {{ \Carbon\Carbon::parse(Auth::user()->birth_date)->format('l, F j, Y') }}!
+        </div>
+    @endif
 </div>
 
 <!-- Modal for Logging a New Kick -->
@@ -188,7 +213,6 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <!-- Description Input -->
                     <div class="form-group">
                         <label for="description">Description (optional):</label>
                         <textarea class="form-control" id="description" name="description" rows="3" placeholder="Enter details (e.g., Baby was extra active)"></textarea>
@@ -198,6 +222,38 @@
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-baby">
                         <i class="fas fa-save"></i> Save Kick
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal for Recording Baby Birth with a Selectable Date -->
+<div class="modal fade" id="birthModal" tabindex="-1" role="dialog" aria-labelledby="birthModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form action="{{ route('kicks.recordBirth') }}" method="POST">
+            {{ csrf_field() }}
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="birthModalLabel">
+                        <i class="fas fa-calendar-alt"></i>
+                        Record Baby Birth
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="birth_date">Select Baby Birth Date:</label>
+                        <input type="date" class="form-control" id="birth_date" name="birth_date" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-baby">
+                        <i class="fas fa-save"></i> Save Birth Date
                     </button>
                 </div>
             </div>

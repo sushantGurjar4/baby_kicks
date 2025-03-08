@@ -53,29 +53,75 @@ class KickController extends Controller
      */
     public function stats()
     {
-        // Retrieve all active kicks for the current user
+        $user = auth()->user();
+
+        // If there's no birth date, default to "today"
+        $birthDate = $user->birth_date ? \Carbon\Carbon::parse($user->birth_date) : \Carbon\Carbon::today();
+
+        // Retrieve all active kicks
         $kicks = Kick::where('user_id', auth()->id())
             ->where('is_active', true)
             ->get();
 
-        // Group kicks by day (formatted as d/m)
+        if ($kicks->count() === 0) {
+            return view('kicks.stats', [
+                'labels' => [],
+                'data' => [],
+                'average' => 0,
+            ]);
+        }
+
+        // earliest date among kicks
+        $earliestDate = $kicks->min('kick_time');
+        $start = \Carbon\Carbon::parse($earliestDate)->startOfDay();
+
+        // end is the min between the birth date (startOfDay) and today
+        // but if we want to ensure we don't go beyond birth date:
+        $birthStart = $birthDate->copy()->startOfDay();
+        $end = \Carbon\Carbon::today()->startOfDay();
+        // whichever is earlier
+        $end = $end->gt($birthStart) ? $birthStart : $end;
+
+        // group by day
         $grouped = $kicks->groupBy(function($item) {
             return \Carbon\Carbon::parse($item->kick_time)->format('d/m');
         });
 
         $labels = [];
         $data = [];
-        foreach ($grouped as $date => $group) {
-            $labels[] = $date;
-            $data[] = $group->count();
+
+        $current = $start->copy();
+        while ($current->lte($end)) {
+            $label = $current->format('d/m');
+            $count = isset($grouped[$label]) ? $grouped[$label]->count() : 0;
+
+            $labels[] = $label;
+            $data[]   = $count;
+
+            $current->addDay();
         }
 
-        // Calculate average kicks per day
-        $totalDays = count($grouped);
-        $totalKicks = $kicks->count();
+        $totalDays = count($data);
+        $totalKicks = array_sum($data);
         $average = $totalDays > 0 ? round($totalKicks / $totalDays, 2) : 0;
 
         return view('kicks.stats', compact('labels', 'data', 'average'));
+    }
+
+    //Record Birth Date
+    public function recordBirth(Request $request)
+    {
+        $request->validate([
+            'birth_date' => 'required|date',
+        ]);
+
+        $user = auth()->user();
+        // Save the selected birth date
+        $user->birth_date = Carbon::parse($request->birth_date)->toDateString();
+        $user->save();
+
+        return redirect()->route('kicks.index')
+            ->with('success', 'Baby birth date recorded!');
     }
 
     /**
@@ -83,18 +129,23 @@ class KickController extends Controller
      */
     public function store(Request $request)
     {
-        // Validate input (description is optional)
+        // Check if baby's birth date is set
+        $user = auth()->user();
+        if (!is_null($user->birth_date)) {
+            return redirect()->route('kicks.index')
+                ->with('success', 'Congratulations on your baby being born! Kick recording is now disabled.');
+        }
+
         $request->validate([
             'description' => 'nullable|string|max:255',
         ]);
-
-        // Create a new Kick with current time, description, and user id
+        
         Kick::create([
             'kick_time'   => now(),
             'description' => $request->description,
-            'user_id'     => auth()->id(),
+            'user_id'     => $user->id,
         ]);
-
+        
         return redirect()->route('kicks.index')
             ->with('success', 'Kick logged successfully!');
     }

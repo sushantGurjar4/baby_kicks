@@ -21,6 +21,9 @@ Route::group(['middleware' => 'auth'], function() {
     
     // Soft-delete (mark inactive)
     Route::delete('/kicks/{kick}', 'KickController@destroy')->name('kicks.destroy');
+
+    //Record birth
+    Route::post('/kicks/birth', 'KickController@recordBirth')->name('kicks.recordBirth');
 });
 
 // Redirect '/' to '/kicks'
