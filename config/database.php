@@ -54,21 +54,6 @@ return [
             'engine' => null,
         ],
 
-        // 'mysql' => [
-        //     'driver' => 'mysql',
-        //     'host' => env('DB_HOST', 'mysql-1a49e41b-sushantgurjar9-5aae.i.aivencloud.com'),
-        //     'port' => env('DB_PORT', '28928'),
-        //     'database' => env('DB_DATABASE', 'baby_kick_counter'),
-        //     'username' => env('DB_USERNAME', 'avnadmin'),
-        //     'password' => env('DB_PASSWORD', 'AVNS_EZiVWKSWZiHQlfr3fo8'),
-        //     'unix_socket' => env('DB_SOCKET', ''),
-        //     'charset' => 'utf8mb4',
-        //     'collation' => 'utf8mb4_unicode_ci',
-        //     'prefix' => '',
-        //     'strict' => true,
-        //     'engine' => null,
-        // ],
-
         'pgsql' => [
             'driver' => 'pgsql',
             'host' => env('DB_HOST', '127.0.0.1'),
