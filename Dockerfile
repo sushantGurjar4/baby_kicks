@@ -1,11 +1,14 @@
-# Use the latest Ubuntu base image
-FROM ubuntu:latest
+# Use a stable Ubuntu version
+FROM ubuntu:22.04
 
-# Set non-interactive mode
+# Set non-interactive mode for apt
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Update and install required dependencies
-RUN apt-get update && apt-get upgrade -y && apt-get install -y \
+# Ensure system packages are updated properly
+RUN apt-get update && apt-get -y upgrade
+
+# Install required dependencies
+RUN apt-get install --no-install-recommends -y \
     apache2 \
     apache2-dev \
     bison \
@@ -35,14 +38,14 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     php-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Fix GMP symlink issue (only create if it doesn't exist)
+# Fix GMP header issue (only create if it doesn’t exist)
 RUN test -f /usr/include/gmp.h || ln -s /usr/include/x86_64-linux-gnu/gmp.h /usr/include/gmp.h
 
-# Install and enable mcrypt via PECL
-RUN pecl install mcrypt-1.0.4 && echo "extension=mcrypt.so" > /etc/php/8.1/cli/conf.d/20-mcrypt.ini
+# Install mcrypt via PECL (since it's deprecated in Ubuntu repositories)
+RUN pecl install mcrypt-1.0.4 && echo "extension=mcrypt.so" > /etc/php/8.1/cli/conf.d/20-mcrypt.ini || true
 
 # Clone the PHP source repository
-RUN git clone https://github.com/php/php-src.git /usr/local/src/php
+RUN git clone --depth=1 https://github.com/php/php-src.git /usr/local/src/php
 
 # Compile PHP7
 RUN cd /usr/local/src/php && ./buildconf && ./configure \
@@ -50,91 +53,38 @@ RUN cd /usr/local/src/php && ./buildconf && ./configure \
     --with-config-file-path=/usr/local/php70 \
     --with-config-file-scan-dir=/usr/local/php70/conf.d \
     --with-apxs2=/usr/bin/apxs2 \
-    --with-libdir=/lib/x86_64-linux-gnu \
     --enable-fpm \
     --without-pear \
     --with-openssl \
-    --with-zlib \
-    --enable-zip \
     --enable-mbstring \
-    --enable-zend-signals \
-    --with-gd \
-    --with-jpeg-dir=/usr \
-    --with-png-dir=/usr \
-    --with-vpx-dir=/usr \
-    --with-freetype-dir=/usr \
-    --with-t1lib=/usr \
-    --enable-gd-native-ttf \
     --enable-exif \
-    --with-mysql-sock=/var/run/mysqld/mysqld.sock \
-    --enable-phpdbg \
-    --with-gmp \
-    --with-zlib-dir=/usr \
-    --with-gettext \
-    --with-kerberos \
-    --with-imap-ssl \
-    --with-iconv \
-    --enable-sockets \
-    --with-pspell \
-    --with-pdo-mysql=mysqlnd \
-    --with-pdo-sqlite \
-    --with-pgsql \
-    --with-pdo-pgsql \
+    --with-gd \
+    --enable-gd-native-ttf \
+    --with-jpeg \
+    --with-png \
+    --enable-zip \
     --enable-soap \
-    --enable-xmlreader \
-    --with-xsl \
-    --enable-ftp \
-    --enable-cgi \
-    --with-curl=/usr \
-    --with-tidy \
-    --with-xmlrpc \
-    --enable-sysvsem \
-    --enable-sysvshm \
-    --enable-shmop \
-    --with-readline \
-    --enable-pcntl \
+    --with-curl \
+    --enable-sockets \
     --enable-intl \
-    --with-mysqli=mysqlnd \
-    --enable-calendar \
-    --enable-bcmath && make && make install
-
-# Custom PHP binary
-COPY newphp /usr/bin/newphp
-RUN chmod +x /usr/bin/newphp
-
-# Set up Apache environment variables
-ENV APACHE_RUN_USER=www-data \
-    APACHE_RUN_GROUP=www-data \
-    APACHE_LOG_DIR=/var/log/apache2 \
-    APACHE_LOCK_DIR=/var/lock/apache2 \
-    APACHE_PID_FILE=/var/run/apache2.pid
+    --with-mysqli \
+    --with-pdo-mysql \
+    --enable-bcmath && make -j$(nproc) && make install
 
 # Configure Apache
 RUN mkdir -p /www/public
-ADD apache-config-2.conf /etc/apache2/sites-enabled/000-default-2.conf
+COPY apache-config-2.conf /etc/apache2/sites-enabled/000-default-2.conf
 RUN echo "\n<FilesMatch \\.php$>\nSetHandler application/x-httpd-php\n</FilesMatch>" >> /etc/apache2/apache2.conf
 
-# Enable Apache prefork module and restart
+# Enable Apache prefork module
 RUN a2dismod mpm_event && a2enmod mpm_prefork && service apache2 restart
 
-# Reconfigure installed PHP version
-RUN /usr/bin/newphp 7
-
-# Set up composer environment variables
-ENV COMPOSER_BINARY=/usr/local/bin/composer \
-    COMPOSER_HOME=/usr/local/composer
-ENV PATH $PATH:$COMPOSER_HOME
-
-# Install composer system-wide
+# Set up Composer
 RUN curl -sS https://getcomposer.org/installer | php && \
-    mv composer.phar $COMPOSER_BINARY && \
-    chmod +x $COMPOSER_BINARY
-
-# Set up global composer path
-RUN mkdir $COMPOSER_HOME && chmod a+rw $COMPOSER_HOME
+    mv composer.phar /usr/local/bin/composer && chmod +x /usr/local/bin/composer
 
 # Expose Apache port
 EXPOSE 80
 
-# Start Bash
+# Start Apache
 CMD ["/bin/bash"]
