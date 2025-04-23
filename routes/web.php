@@ -27,6 +27,4 @@ Route::group(['middleware' => 'auth'], function() {
 });
 
 // Redirect '/' to '/kicks'
-Route::get('/', function () {
-    return redirect()->route('kicks.index');
-});
+Route::redirect('/', '/kicks');
