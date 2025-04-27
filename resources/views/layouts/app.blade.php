@@ -12,6 +12,13 @@
 
     <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+
+        <!-- Standard favicon -->
+    <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
+
+    <!-- If you have PNG versions -->
+    <link rel="icon" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+    <link rel="icon" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
 </head>
 <body>
     <div id="app">
