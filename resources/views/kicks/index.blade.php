@@ -78,13 +78,8 @@
         <h2>Today's Date: {{ \Carbon\Carbon::now()->format('l, F j, Y') }}</h2>
         <h4>Total Kicks Today: {{ $countToday }}</h4>
 
-        <!-- Grouped Buttons -->
-        <a href="{{ route('kicks.all') }}" class="btn btn-baby">
-            View All-Time Kicks
-        </a>
-        <a href="{{ route('kicks.stats') }}" class="btn btn-baby">
-            View Stats
-        </a>
+        <a href="{{ route('kicks.all') }}" class="btn btn-baby">View All-Time Kicks</a>
+        <a href="{{ route('kicks.stats') }}" class="btn btn-baby">View Stats</a>
         @if(Auth::user()->birth_date)
             <button class="btn btn-baby" disabled>
                 <i class="fas fa-calendar-alt"></i> Record Baby Birth
@@ -96,7 +91,7 @@
         @endif
     </div>
 
-    <!-- Pregnancy Info (if LMP set and before birth) -->
+    <!-- Pregnancy Info (if before birth) -->
     @if(is_null(Auth::user()->birth_date))
         <div class="text-center mb-4">
             @if(is_null($lmpDate))
@@ -171,7 +166,88 @@
     @endif
 </div>
 
-<!-- Modals (Kick, Birth & LMP) – unchanged aside from placement above -->
+<!-- Kick Modal -->
+<div class="modal fade" id="kickModal" tabindex="-1" role="dialog" aria-labelledby="kickModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <form action="{{ route('kicks.store') }}" method="POST">
+      @csrf
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="kickModalLabel">
+            <i class="fas fa-plus-circle"></i> Log a New Kick
+          </h5>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="description">Description (optional):</label>
+            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button class="btn btn-baby">Save Kick</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- LMP Modal -->
+<div class="modal fade" id="lmpModal" tabindex="-1" role="dialog" aria-labelledby="lmpModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <form action="{{ route('kicks.recordLmp') }}" method="POST">
+      @csrf
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="lmpModalLabel">
+            <i class="fas fa-calendar-alt"></i> Record Last Period Date
+          </h5>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="lmp_date">Last Period Date</label>
+            <input type="date" id="lmp_date" name="lmp_date" class="form-control" required>
+            @error('lmp_date')<small class="text-danger">{{ $message }}</small>@enderror
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button class="btn btn-baby">Save</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Birth Modal -->
+<div class="modal fade" id="birthModal" tabindex="-1" role="dialog" aria-labelledby="birthModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <form action="{{ route('kicks.recordBirth') }}" method="POST">
+      @csrf
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="birthModalLabel">
+            <i class="fas fa-calendar-alt"></i> Record Baby Birth
+          </h5>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="birth_date">Baby Birth Date</label>
+            <input type="date" id="birth_date" name="birth_date" class="form-control" required>
+            @error('birth_date')<small class="text-danger">{{ $message }}</small>@enderror
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button class="btn btn-baby">Save Birth Date</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
 
 <!-- jQuery, Popper.js, Bootstrap JS -->
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
