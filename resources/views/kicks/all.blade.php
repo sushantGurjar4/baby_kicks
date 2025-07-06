@@ -97,6 +97,36 @@
         <a href="{{ route('kicks.index') }}" class="btn btn-baby">View Today's Kicks</a>
     </div>
 
+    <!-- Date Filter Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ route('kicks.all') }}" class="form-inline justify-content-end">
+                <div class="form-group mr-2">
+                    <label for="start_date" class="mr-1">Start Date:</label>
+                    <input
+                        type="date"
+                        name="start_date"
+                        id="start_date"
+                        class="form-control"
+                        value="{{ old('start_date', $start_date) }}"
+                    >
+                </div>
+                <div class="form-group mr-2">
+                    <label for="end_date" class="mr-1">End Date:</label>
+                    <input
+                        type="date"
+                        name="end_date"
+                        id="end_date"
+                        class="form-control"
+                        value="{{ old('end_date', $end_date) }}"
+                    >
+                </div>
+                <button type="submit" class="btn btn-baby mr-2">Filter</button>
+                <a href="{{ route('kicks.all') }}" class="btn btn-secondary">Reset</a>
+            </form>
+        </div>
+    </div>
+
     <!-- All-Time Kicks Table -->
     <div class="card">
         <div class="card-header text-center">

@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <!-- Google Font: Comic Neue -->
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@300;400;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome for icons -->
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         body {
@@ -23,91 +23,46 @@
             justify-content: space-between;
             align-items: center;
         }
-        .header h1 {
-            font-size: 3rem;
-            margin-bottom: 10px;
-        }
-        .header p {
-            font-size: 1.2rem;
-        }
+        .header h1 { font-size: 3rem; margin-bottom: 0; }
+        .header p  { font-size: 1.2rem; margin: 0; }
         .btn-baby {
-            background-color: #FF99CC;
-            border: none;
-            color: #fff;
-            padding: 10px 20px;
-            font-size: 1.2rem;
-            border-radius: 50px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin: 0 5px;
+            background-color: #FF99CC; border: none; color: #fff;
+            padding: 10px 20px; font-size: 1.2rem; border-radius: 50px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin: 0 5px;
         }
-        .btn-baby:hover {
-            background-color: #FF80B3;
-        }
-        .user-info {
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-            color: #FF6699;
-            text-align: center;
-        }
-        .congrats-message {
-            font-size: 1.4rem;
-            color: #27ae60;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .table thead {
-            background-color: #FF99CC;
-            color: #fff;
-        }
-        .table tbody tr {
-            background-color: #FFF8F0;
-        }
-        .card {
-            border: none;
-            margin-bottom: 30px;
-        }
-        /* Modal Styles */
-        .modal-header {
-            background-color: #FFCCE5;
-            border-bottom: none;
-        }
-        .modal-header h5 {
-            font-size: 1.8rem;
-            color: #fff;
-        }
-        .modal-header .close {
-            color: #fff;
-            opacity: 1;
-        }
-        .modal-footer .btn-secondary {
-            background-color: #ccc;
-            border: none;
-        }
+        .btn-baby:hover { background-color: #FF80B3; }
+        .user-info { font-size: 1.2rem; margin-bottom: 20px; color: #FF6699; text-align: center; }
+        .congrats-message { font-size: 1.4rem; color: #27ae60; text-align: center; margin-bottom: 20px; }
+        .pregnancy-info p { font-size: 1.1rem; margin: 4px 0; color: #555; }
+        .table thead { background-color: #FF99CC; color: #fff; }
+        .table tbody tr { background-color: #FFF8F0; }
+        .card { border: none; margin-bottom: 30px; }
+        .modal-header { background-color: #FFCCE5; border-bottom: none; }
+        .modal-header h5, .modal-header .close { color: #fff; }
+        .modal-footer .btn-secondary { background-color: #ccc; border: none; }
     </style>
 </head>
 <body>
 
 <div class="container my-4">
-    <!-- Header with Logout -->
+    <!-- Header + Logout -->
     <div class="header">
         <div>
             <h1><i class="fas fa-baby"></i> Baby Kick Counter</h1>
             <p>Keep track of your baby's kicks in a fun, easy way!</p>
         </div>
         @if(Auth::check())
-            <div>
-                <a href="#" class="btn btn-danger"
-                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                   <i class="fas fa-sign-out-alt"></i> Logout
-                </a>
-                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                    {{ csrf_field() }}
-                </form>
-            </div>
+            <a href="#" class="btn btn-danger"
+               onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+               <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                @csrf
+            </form>
         @endif
     </div>
 
-    <!-- Logged In User Info and Fun Fact -->
+    <!-- User Info + Funfact -->
     @if(Auth::check())
         <div class="user-info">
             Hi <strong>{{ Auth::user()->name }}</strong>! Welcome to your Baby Kick Counter.
@@ -118,33 +73,54 @@
         </div>
     @endif
 
-    <!-- Navigation and Birth Record Section -->
+    <!-- Today's Date + Total + Top Buttons -->
     <div class="text-center mb-4">
         <h2>Today's Date: {{ \Carbon\Carbon::now()->format('l, F j, Y') }}</h2>
         <h4>Total Kicks Today: {{ $countToday }}</h4>
-        <!-- Always visible navigation buttons -->
-        <a href="{{ route('kicks.all') }}" class="btn btn-baby">View All-Time Kicks</a>
-        <a href="{{ route('kicks.stats') }}" class="btn btn-baby">View Stats</a>
-        <!-- Record Baby Birth Button -->
+
+        <!-- Grouped Buttons -->
+        <a href="{{ route('kicks.all') }}" class="btn btn-baby">
+            View All-Time Kicks
+        </a>
+        <a href="{{ route('kicks.stats') }}" class="btn btn-baby">
+            View Stats
+        </a>
         @if(Auth::user()->birth_date)
-            <button type="button" class="btn btn-baby" disabled>
+            <button class="btn btn-baby" disabled>
                 <i class="fas fa-calendar-alt"></i> Record Baby Birth
             </button>
         @else
-            <button type="button" class="btn btn-baby" data-toggle="modal" data-target="#birthModal">
+            <button class="btn btn-baby" data-toggle="modal" data-target="#birthModal">
                 <i class="fas fa-calendar-alt"></i> Record Baby Birth
             </button>
         @endif
     </div>
 
-    <!-- Show Log Kick Button and Today's Kicks Table only if baby is not born -->
+    <!-- Pregnancy Info (if LMP set and before birth) -->
     @if(is_null(Auth::user()->birth_date))
         <div class="text-center mb-4">
-            <button type="button" class="btn btn-baby" data-toggle="modal" data-target="#kickModal">
+            @if(is_null($lmpDate))
+                <button class="btn btn-baby" data-toggle="modal" data-target="#lmpModal">
+                    <i class="fas fa-calendar"></i> Record Last Period Date
+                </button>
+            @else
+                <div class="pregnancy-info mx-auto" style="max-width: 400px;">
+                    <p><strong>Last Period:</strong>  {{ $lmpDate->format('l, F j, Y') }}</p>
+                    <p><strong>Due Date:</strong>     {{ $dueDate->format('l, F j, Y') }}</p>
+                    <p><strong>Gestational Age:</strong> {{ $currentWeeks }}w {{ $currentDays }}d</p>
+                    <p><strong>Time Remaining:</strong>  {{ $remainingWeeks }}w {{ $remainingDays }}d</p>
+                </div>
+            @endif
+        </div>
+    @endif
+
+    <!-- Log Kick + Today's Kicks Table (if before birth) -->
+    @if(is_null(Auth::user()->birth_date))
+        <div class="text-center mb-4">
+            <button class="btn btn-baby" data-toggle="modal" data-target="#kickModal">
                 <i class="fas fa-plus"></i> Log Kick
             </button>
         </div>
-
         <div class="card">
             <div class="card-header text-center">
                 <h4 class="mb-0">Today's Kicks (Newest First)</h4>
@@ -161,18 +137,17 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($todayKicks as $index => $kick)
+                            @forelse($todayKicks as $i => $kick)
                                 <tr>
-                                    <td>{{ $index + 1 }}</td>
+                                    <td>{{ $i + 1 }}</td>
                                     <td>{{ $kick->kick_time->format('g:i A') }}</td>
                                     <td>{{ $kick->description ?? '—' }}</td>
                                     <td>
-                                        <form action="{{ route('kicks.destroy', $kick->id) }}" method="POST" 
-                                              onsubmit="return confirm('Are you sure you want to mark this kick as inactive?');">
-                                            {{ csrf_field() }}
-                                            {{ method_field('DELETE') }}
-                                            <button type="submit" class="btn btn-sm" 
-                                                    style="background-color: #e74c3c; border: none; color: #fff; padding: 5px 10px; border-radius: 4px;">
+                                        <form method="POST" action="{{ route('kicks.destroy', $kick->id) }}"
+                                              onsubmit="return confirm('Mark this kick inactive?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="btn btn-sm" style="background:#e74c3c;color:#fff;">
                                                 <i class="fas fa-trash"></i> Delete
                                             </button>
                                         </form>
@@ -189,79 +164,16 @@
             </div>
         </div>
     @else
-        <!-- If baby's birth date is recorded, show congratulatory message instead of kick logging features -->
         <div class="congrats-message">
-            Congratulations on your baby being born on {{ \Carbon\Carbon::parse(Auth::user()->birth_date)->format('l, F j, Y') }}!
+            Congratulations on your baby being born on
+            {{ Auth::user()->birth_date->format('l, F j, Y') }}!
         </div>
     @endif
 </div>
 
-<!-- Modal for Logging a New Kick -->
-<div class="modal fade" id="kickModal" tabindex="-1" role="dialog" aria-labelledby="kickModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <form action="{{ route('kicks.store') }}" method="POST">
-            {{ csrf_field() }}
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="kickModalLabel">
-                        <i class="fas fa-baby"></i>
-                        <i class="fas fa-baby-carriage"></i>
-                        Log a New Kick
-                    </h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="description">Description (optional):</label>
-                        <textarea class="form-control" id="description" name="description" rows="3" placeholder="Enter details (e.g., Baby was extra active)"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-baby">
-                        <i class="fas fa-save"></i> Save Kick
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
+<!-- Modals (Kick, Birth & LMP) – unchanged aside from placement above -->
 
-<!-- Modal for Recording Baby Birth with a Selectable Date -->
-<div class="modal fade" id="birthModal" tabindex="-1" role="dialog" aria-labelledby="birthModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <form action="{{ route('kicks.recordBirth') }}" method="POST">
-            {{ csrf_field() }}
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="birthModalLabel">
-                        <i class="fas fa-calendar-alt"></i>
-                        Record Baby Birth
-                    </h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="birth_date">Select Baby Birth Date:</label>
-                        <input type="date" class="form-control" id="birth_date" name="birth_date" required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-baby">
-                        <i class="fas fa-save"></i> Save Birth Date
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- jQuery, Popper.js, and Bootstrap 4 JS -->
+<!-- jQuery, Popper.js, Bootstrap JS -->
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>

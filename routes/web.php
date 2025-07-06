@@ -2,8 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-// If using Laravel 5.5, you must use string-based references.
-// Also ensure you only have Auth::routes() once.
+// Authentication routes (login, register, etc)
 Auth::routes();
 
 Route::group(['middleware' => 'auth'], function() {
@@ -13,7 +12,7 @@ Route::group(['middleware' => 'auth'], function() {
     // Show all-time kicks
     Route::get('/kicks/all', 'KickController@all')->name('kicks.all');
 
-    // Statistics page (new)
+    // Statistics page
     Route::get('/kicks/stats', 'KickController@stats')->name('kicks.stats');
     
     // Store a new kick
@@ -22,9 +21,12 @@ Route::group(['middleware' => 'auth'], function() {
     // Soft-delete (mark inactive)
     Route::delete('/kicks/{kick}', 'KickController@destroy')->name('kicks.destroy');
 
-    //Record birth
+    // Record baby birth date
     Route::post('/kicks/birth', 'KickController@recordBirth')->name('kicks.recordBirth');
+
+    // Record last period date (LMP) for pregnancy calculations
+    Route::post('/kicks/lmp', 'KickController@recordLmp')->name('kicks.recordLmp');
 });
 
-// Redirect '/' to '/kicks'
+// Redirect root URL to today's kicks
 Route::redirect('/', '/kicks');

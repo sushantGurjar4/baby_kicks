@@ -15,7 +15,11 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password',
+        'name',
+        'email',
+        'password',
+        'birth_date',   // date baby was born
+        'lmp_date',     // last menstrual period date
     ];
 
     /**
@@ -24,9 +28,24 @@ class User extends Authenticatable
      * @var array
      */
     protected $hidden = [
-        'password', 'remember_token',
+        'password',
+        'remember_token',
     ];
 
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'birth_date'        => 'date',
+        'lmp_date'          => 'date',
+    ];
+
+    /**
+     * User has many kicks.
+     */
     public function kicks()
     {
         return $this->hasMany(\App\Kick::class);

@@ -13,39 +13,96 @@ class KickController extends Controller
      */
     public function index()
     {
-        // Get today's date (midnight) using Carbon
+        $user = auth()->user();
         $today = Carbon::today();
-        
-        // Fetch kicks for the current user, active only, for today
-        $todayKicks = Kick::where('user_id', auth()->id())
+
+        // ——— Pregnancy Calculations ———
+        $lmpDate = $user->lmp_date;  // null or Carbon
+        $dueDate = $currentWeeks = $currentDays = $remainingWeeks = $remainingDays = null;
+
+        if ($lmpDate) {
+            $lmp    = $lmpDate->copy()->startOfDay();
+            $dueDate = $lmp->copy()->addDays(280);         // Naegele’s rule
+            $diff    = $lmp->diffInDays($today);           // days since LMP
+
+            $currentWeeks = intdiv($diff, 7);
+            $currentDays  = $diff % 7;
+
+            $remainingTotal = $today->diffInDays($dueDate);
+            $remainingWeeks = intdiv($remainingTotal, 7);
+            $remainingDays  = $remainingTotal % 7;
+        }
+
+        // ——— Today’s Kicks ———
+        $todayKicks = Kick::where('user_id', $user->id)
             ->where('is_active', true)
             ->whereDate('kick_time', $today)
             ->orderBy('kick_time', 'desc')
             ->get();
-        
-        // Count the total kicks for today
+
         $countToday = $todayKicks->count();
-        
-        // Return the view with today's kicks and count
-        return view('kicks.index', compact('todayKicks', 'countToday'));
+
+        return view('kicks.index', compact(
+            'todayKicks',
+            'countToday',
+            'lmpDate',
+            'dueDate',
+            'currentWeeks',
+            'currentDays',
+            'remainingWeeks',
+            'remainingDays'
+        ));
+    }
+
+    /**
+     * Store the last period date (LMP).
+     */
+    public function recordLmp(Request $request)
+    {
+        $request->validate([
+            'lmp_date' => 'required|date|before:today',
+        ]);
+
+        $user = auth()->user();
+        $user->lmp_date = Carbon::parse($request->lmp_date)->toDateString();
+        $user->save();
+
+        return redirect()->route('kicks.index')
+                         ->with('success', 'Last period date recorded!');
     }
 
     /**
      * Display all kicks (lifetime).
      */
-    public function all()
+    public function all(Request $request)
     {
-        // Fetch all active kicks for the current user
-        $allKicks = Kick::where('user_id', auth()->id())
-            ->where('is_active', true)
-            ->orderBy('kick_time', 'desc')
-            ->get();
-        
-        // Count total lifetime kicks
+        // Build base query
+        $query = Kick::where('user_id', auth()->id())
+                     ->where('is_active', true);
+
+        // If user supplied a start_date, filter kicks on or after it
+        if ($request->filled('start_date')) {
+            $start = Carbon::parse($request->start_date)->startOfDay();
+            $query->where('kick_time', '>=', $start);
+        }
+
+        // If user supplied an end_date, filter kicks on or before it
+        if ($request->filled('end_date')) {
+            $end = Carbon::parse($request->end_date)->endOfDay();
+            $query->where('kick_time', '<=', $end);
+        }
+
+        // Execute, newest first
+        $allKicks = $query->orderBy('kick_time', 'desc')->get();
         $countAll = $allKicks->count();
-        
-        // Return the view with all kicks and total count
-        return view('kicks.all', compact('allKicks', 'countAll'));
+
+        // Pass the selected dates back to the view so the inputs stay filled
+        return view('kicks.all', [
+            'allKicks'   => $allKicks,
+            'countAll'   => $countAll,
+            'start_date' => $request->start_date,
+            'end_date'   => $request->end_date,
+        ]);
     }
 
     /**
